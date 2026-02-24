@@ -1,0 +1,12 @@
+#ifndef MOVE_H
+#define MOVE_H
+
+struct Move {
+    int fromRow, fromCol, toRow, toCol;
+
+    Move() : fromRow(0), fromCol(0), toRow(0), toCol(0) {}
+
+    Move(int fr, int fc, int tr, int tc) : fromRow(fr), fromCol(fc), toRow(tr), toCol(tc) {}
+};
+
+#endif

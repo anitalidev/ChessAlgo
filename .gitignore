@@ -1,0 +1,72 @@
+test_runner
+chess
+java_swing_frontend/.DS_Store
+.DS_Store
+out/ui/Title.class
+out/ui/PieceIconLoader.class
+out/ui/ChessApp.class
+out/ui/BoardPanel$1.class
+out/ui/BoardPanel.class
+out/model/Move.class
+out/model/GameState.class
+out/engine/BackendBridge.class
+java_swing_frontend/src/ui/PieceIconLoader.class
+java_swing_frontend/src/ui/ChessApp.class
+java_swing_frontend/src/ui/BoardPanel.class
+java_swing_frontend/src/engine/BackendBridge.class
+java_swing_frontend/src/ui/BoardPanel$1.class
+
+# macOS system files
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Xcode and dSYM
+*.dSYM/
+*.xcworkspace
+*.xcuserstate
+
+# Compiled binaries and libraries
+*.o
+*.obj
+*.so
+*.dll
+*.exe
+*.out
+*.a
+*.lib
+*.dylib
+
+# Build folders
+/build/
+/bin/
+/dist/
+
+# C++ specific
+cpp_backend/chess
+cpp_backend/libChessEngine.dylib
+cpp_backend/chess.dSYM/
+cpp_backend/libChessEngine.dylib.dSYM/
+src/libChessEngine.dylib
+
+# Java specific
+*.class
+*.jar
+*.war
+*.ear
+
+# IDEs and editors
+.idea/
+*.iml
+*.vscode/
+*.swp
+*~
+
+# Logs
+*.log
+
+# Test binaries
+cpp_backend/test/test_runner
+
+# Misc
+Thumbs.db
