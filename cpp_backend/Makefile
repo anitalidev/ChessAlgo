@@ -1,4 +1,4 @@
-TARGET = chess
+TARGET = chess # Can run directly as ./chess
 
 CXX = g++
 CXXFLAGS = -std=c++17 -Wall -g -Isrc

@@ -1,7 +1,10 @@
-TARGET = test_runner # ./test_runner
+TARGET = test_runner # can run directly as ./test_runner
 
 CXX = g++
-CXXFLAGS = -std=c++17 -Wall -g -Isrc
+CXXFLAGS = -std=c++17 -Wall -g -Isrc \
+  -I../src \
+  -I"$(JAVA_HOME)/include" \
+  -I"$(JAVA_HOME)/include/darwin"
 
 TEST_SRC = $(wildcard *.cpp)
 
