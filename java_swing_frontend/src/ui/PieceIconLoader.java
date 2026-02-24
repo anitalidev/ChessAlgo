@@ -19,10 +19,7 @@ public class PieceIconLoader {
                 + Character.toLowerCase(code.charAt(0))
                 + ".png";
 
-        String path = "resources/" + fileName;
-
-        ImageIcon icon = new ImageIcon(path);
-
+        ImageIcon icon = new ImageIcon("java_swing_frontend/resources/" + fileName);
         cache.put(code, icon);
         return icon;
     }
