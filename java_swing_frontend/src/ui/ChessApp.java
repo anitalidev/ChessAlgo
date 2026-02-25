@@ -76,6 +76,10 @@ public class ChessApp {
         }
     }
 
+    public static Boolean whiteToMove() {
+        return whiteToMove;
+    }
+
     private static String convertPointsToMove(Point from, Point to) {
         return pointToCoord(from) + pointToCoord(to);
     }

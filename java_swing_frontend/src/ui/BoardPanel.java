@@ -35,15 +35,21 @@ public class BoardPanel extends JPanel {
     }
 
     private void handleClick(int row, int col) {
-        // TODO: Add logic to only allow selecting pieces of the current player,
         if (selectedSquare == null) {
+            java.util.List<Point> foundMoves = getLegalDestinationsFrom(row, col);
+            if (foundMoves.isEmpty()) return; // No legal moves. Don't select square
+
             selectedSquare = new Point(row, col);
-            legalMoves = getLegalDestinationsFrom(row, col);
+            legalMoves = foundMoves;
         } else {
             Point from = selectedSquare;
             Point to = new Point(row, col);
+            if (!legalMoves.contains(to)) {
+                return; // Don't make extra calls if obviously illegal move
+            }
+ 
             ChessApp.makeMove(from, to); // won't make move if illegal
-            // TODO: don't clear if no move made
+
             selectedSquare = null;
             legalMoves.clear();
         }
@@ -112,6 +118,8 @@ public class BoardPanel extends JPanel {
 
     private java.util.List<Point> getLegalDestinationsFrom(int row, int col) {
         // TODO: Implement getting legal moves from just one square instead of having to filter legal moves for all squares
+        if (board[row][col] == null || Character.isUpperCase(board[row][col].charAt(0)) != ChessApp.whiteToMove())
+                return new ArrayList<>(); // not legal to "move" an empty square or piece of different colour
 
         java.util.List<Point> moves = new ArrayList<>();
 
