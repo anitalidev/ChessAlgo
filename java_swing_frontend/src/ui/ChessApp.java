@@ -17,7 +17,7 @@ import engine.BackendBridge;
 public class ChessApp {
 
     private static BoardPanel boardPanel;
-    private static boolean whiteToMove = true;
+    protected static boolean whiteToMove = true;
 
 
     public static void main(String[] args) {

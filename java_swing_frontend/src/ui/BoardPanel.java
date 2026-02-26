@@ -34,42 +34,46 @@ public class BoardPanel extends JPanel {
         });
     }
 
+    // TODO: There is a bug where you can (ghost) move pieces while C++ is running the search
+    // It completely messes up everything else and prevents future movement of pieces.
+    // Likely due to desync of which colour is to move 
     private void handleClick(int row, int col) {
-        if (selectedSquare == null) {
+        if (selectedSquare == null) { // no square currently selected, select current if valid
             java.util.List<Point> foundMoves = getLegalDestinationsFrom(row, col);
-            if (foundMoves.isEmpty()) return; // No legal moves. Don't select square
-
+            if (foundMoves.isEmpty()) return;
             selectedSquare = new Point(row, col);
             legalMoves = foundMoves;
         } else {
             Point from = selectedSquare;
             Point to = new Point(row, col);
 
-            if (from.x == to.x && from.y == to.y) { // If clicked the same square
-                selectedSquare = null;
-                legalMoves.clear();
+            if (from.x == row && from.y == col) {
+                resetSelection(); // clicked on the same square twice in a row, deselect
                 repaint();
-                suggestedFrom = null;
-                suggestedTo = null;
                 return;
             }
 
-            if (legalMoves.contains(to)) { // Don't make extra calls if obviously illegal move
-                ChessApp.makeMove(from, to); // won't make move if illegal
+            if (legalMoves.contains(to)) {
+                ChessApp.makeMove(from, to); // Only legal moves allowed
+                resetSelection();
             } else {
-                selectedSquare = null;
-                legalMoves.clear();
-                handleClick(row, col); // Possibly select current square if allowed. 
-                return; // Shouldn't redo below
+                java.util.List<Point> newMoves = getLegalDestinationsFrom(row, col);
+                if (!newMoves.isEmpty()) {
+                    selectedSquare = new Point(row, col); // select clicked square if it is valid
+                    legalMoves = newMoves;
+                } else {
+                    resetSelection(); // deselect
+                }
             }
-            selectedSquare = null;
-            legalMoves.clear();
         }
+        repaint(); // show changes
+    }
 
+    private void resetSelection() {
+        selectedSquare = null;
+        legalMoves.clear();
         suggestedFrom = null;
         suggestedTo = null;
-
-        repaint();
     }
 
     private void setupStartingPosition() {
@@ -117,9 +121,20 @@ public class BoardPanel extends JPanel {
                     g.setColor(new Color(255, 165, 0, 120)); // translucent orange
                     g.fillRect(col * TILE_SIZE, row * TILE_SIZE, TILE_SIZE, TILE_SIZE);
                 }
+            }
+        }
 
-                // TODO: Highlight king with red, if in check. Low priority
 
+        // Highlight selected piece as yellow
+        if (selectedSquare != null) {
+            g.setColor(new Color(255, 255, 0, 100)); // translucent yellow
+            g.fillRect(selectedSquare.y * TILE_SIZE, selectedSquare.x * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+        }
+
+        // TODO: Highlight king with red, if in check. Low priority
+
+        for (int row = 0; row < 8; row++) {
+            for (int col = 0; col < 8; col++) {
                 // if there's a piece on this tile, draw it
                 String code = board[row][col];
                 if (code != null) {
@@ -199,6 +214,13 @@ public class BoardPanel extends JPanel {
             }
         }
 
+        // Update white to move
+        if (parts.length > 1) {
+            boolean whiteToMove = parts[1].equalsIgnoreCase("w");
+            ChessApp.whiteToMove = whiteToMove;
+            
+        }
+        
         // reset
         selectedSquare = null;
         legalMoves.clear();

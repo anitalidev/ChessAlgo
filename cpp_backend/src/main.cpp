@@ -21,8 +21,7 @@ int main() {
         bool whiteToMove = fen.find(" w ") != std::string::npos;
 
         // Generate legal moves
-        std::vector<Move> pseudoMoves = gen.generateMoves(board, whiteToMove);
-        std::vector<Move> legalMoves = gen.filterLegalMoves(board, pseudoMoves, whiteToMove);
+        std::vector<Move> legalMoves = gen.generateLegalMoves(board, whiteToMove);
 
         if (legalMoves.empty()) {
             std::cout << "No legal moves available.\n";
