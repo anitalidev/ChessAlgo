@@ -44,12 +44,24 @@ public class BoardPanel extends JPanel {
         } else {
             Point from = selectedSquare;
             Point to = new Point(row, col);
-            if (!legalMoves.contains(to)) {
-                return; // Don't make extra calls if obviously illegal move
-            }
- 
-            ChessApp.makeMove(from, to); // won't make move if illegal
 
+            if (from.x == to.x && from.y == to.y) { // If clicked the same square
+                selectedSquare = null;
+                legalMoves.clear();
+                repaint();
+                suggestedFrom = null;
+                suggestedTo = null;
+                return;
+            }
+
+            if (legalMoves.contains(to)) { // Don't make extra calls if obviously illegal move
+                ChessApp.makeMove(from, to); // won't make move if illegal
+            } else {
+                selectedSquare = null;
+                legalMoves.clear();
+                handleClick(row, col); // Possibly select current square if allowed. 
+                return; // Shouldn't redo below
+            }
             selectedSquare = null;
             legalMoves.clear();
         }
@@ -105,6 +117,8 @@ public class BoardPanel extends JPanel {
                     g.setColor(new Color(255, 165, 0, 120)); // translucent orange
                     g.fillRect(col * TILE_SIZE, row * TILE_SIZE, TILE_SIZE, TILE_SIZE);
                 }
+
+                // TODO: Highlight king with red, if in check. Low priority
 
                 // if there's a piece on this tile, draw it
                 String code = board[row][col];
