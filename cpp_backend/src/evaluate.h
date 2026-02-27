@@ -6,7 +6,7 @@
     class Evaluator {
     public:
         // Returns positive score for white advantage, negative for black
-        int evaluate(const Board& board, bool whiteToMove);
+        int evaluate(const Board& board);
 
     private:
         // Helper: material value of each piece

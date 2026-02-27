@@ -1,12 +1,12 @@
 #include "evaluate.h"
 #include <cctype> // for std::tolower
 
-// TODO: Implement
-int Evaluator::evaluate(const Board& board, bool whiteToMove) {
+// Evaluate board state. More positive = white better, More negative = black better
+int Evaluator::evaluate(const Board& board) {
     int score = 0;
-    if (board.isCheckmate(whiteToMove)) {
+    if (board.isCheckmate(true)) {
         return std::numeric_limits<int>::max();
-    } else if (board.isCheckmate(!whiteToMove)) {
+    } else if (board.isCheckmate(false)) {
         return std::numeric_limits<int>::min();
     }
 
@@ -14,10 +14,10 @@ int Evaluator::evaluate(const Board& board, bool whiteToMove) {
         for (int j = 0; j < 8; ++j) {
             Piece* piece = board.getPiece(i, j);
             if (piece) {
-                if (std::isupper(piece->getSymbol()) == whiteToMove) {
+                if (std::isupper(piece->getSymbol())) {
                     score += getPieceValue(tolower(piece->getSymbol()));
                 } else {
-                    score += getPieceValue(tolower(piece->getSymbol()));
+                    score -= getPieceValue(tolower(piece->getSymbol()));
                 }
             }
         }
