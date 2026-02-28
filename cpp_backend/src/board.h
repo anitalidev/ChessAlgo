@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include "pieces/pieces.h" 
+#include "undoState.h"
 
 class Board {
 public:
@@ -44,7 +45,7 @@ public:
 private:
     Piece* board[8][8]; // nullptr if square is empty
 
-    std::vector<Move> history;
+    std::vector<UndoState> history;
 
     // Helper: create a piece object from a FEN character
     Piece* createPieceFromSymbol(char symbol);

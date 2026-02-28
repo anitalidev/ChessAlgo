@@ -4,6 +4,7 @@
 struct Move {
     int fromRow, fromCol, toRow, toCol;
     char movingPiece, capturedPiece;
+    // TODO: After finalizing UndoState and editing movegen, can remove capturedPiece.
     int score = 0;
 
     Move() : fromRow(0), fromCol(0), toRow(0), toCol(0) {}

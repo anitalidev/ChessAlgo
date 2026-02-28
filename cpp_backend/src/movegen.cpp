@@ -21,6 +21,7 @@ std::vector<Move> MoveGenerator::generateMoves(const Board& board, bool whiteToM
                     move.movingPiece = piece->getSymbol();
                     Piece* capt = board.getPiece(move.toRow, move.toCol);
                     if (capt) move.capturedPiece = capt->getSymbol();
+                    allMoves.push_back(move);
                 }
             }
         }

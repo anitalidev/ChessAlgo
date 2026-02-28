@@ -139,13 +139,14 @@ bool Board::makeMove(const Move& move, bool skipValidation) {
         if (!isLegal) return false;
     }
 
-    delete board[move.toRow][move.toCol]; // In case something is getting captured
+    UndoState state(move, board[move.toRow][move.toCol], movingPiece->getHasMoved());
+    movingPiece->setHasMoved(true);
+
     board[move.toRow][move.toCol] = movingPiece;
     board[move.fromRow][move.fromCol] = nullptr;
-    movingPiece->setHasMoved(true);
     whiteToMove = !whiteToMove;
 
-    history.push_back(move);
+    history.push_back(state);
 
     return true; 
 }
@@ -161,12 +162,15 @@ bool Board::undoMove() {
     // TOOD: Below currently assumes the history is correct. Add guards
     // TODO: Fix move so that we can keep piece history and don't have to re-make captured
 
-    Move move = history.back();
+    UndoState prevState = history.back();
     history.pop_back();
 
-    Piece* captured = createPieceFromSymbol(move.capturedPiece);
+    Piece* captured = prevState.capturedPiece;
+
+    const Move& move = prevState.move;
 
     board[move.fromRow][move.fromCol] = board[move.toRow][move.toCol];
+    board[move.fromRow][move.fromCol]->setHasMoved(prevState.hadMoved);
     board[move.toRow][move.toCol] = captured;
 
     whiteToMove = !whiteToMove;
