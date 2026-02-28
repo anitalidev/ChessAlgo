@@ -18,13 +18,10 @@ std::vector<Move> MoveGenerator::generateMoves(const Board& board, bool whiteToM
             if (piece && piece->isWhitePiece() == whiteToMove) {
                 std::vector<Move> pieceMoves = piece->generateMoves(row, col, board);
                 for (Move& move : pieceMoves) {
-                    move.movingPiece = piece->getSymbol();
-                    Piece* capt = board.getPiece(move.toRow, move.toCol);
-                    if (capt) move.capturedPiece = capt->getSymbol();
                     allMoves.push_back(move);
                 }
             }
-        }
+        } 
     }
 
     return allMoves;
@@ -54,12 +51,15 @@ std::vector<Move> MoveGenerator::generateSearchMoves(const Board& board, bool wh
 
     // Precompute score values to use in sort below
     for (Move& move : legalMoves) {
-        int val = getCaptureValue(move.capturedPiece);
+        Piece* captured = board.getPiece(move.toRow, move.toCol);
+        Piece* moving = board.getPiece(move.fromRow, move.fromCol);
+        int val;
 
-        if (val == 0) {
-            // Just simply moved the piece
+        if (captured) {
+            val = getCaptureValue(captured->getSymbol());
+            val -= getCaptureValue(moving->getSymbol()); // If causes error something is very wrong.
         } else {
-            val -= getCaptureValue(move.movingPiece); // Capturing with smaller value is less risky
+            val = 0;
         }
 
         move.score = val;
