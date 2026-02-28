@@ -36,10 +36,15 @@ public:
     // Make a move
     bool makeMove(const Move& move, bool skipValidation = false);
 
+    // Undo the last move made. This will require storing a history of moves
+    bool undoMove();
+
     bool getWhiteToMove();
 
 private:
     Piece* board[8][8]; // nullptr if square is empty
+
+    std::vector<Move> history;
 
     // Helper: create a piece object from a FEN character
     Piece* createPieceFromSymbol(char symbol);

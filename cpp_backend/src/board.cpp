@@ -145,7 +145,33 @@ bool Board::makeMove(const Move& move, bool skipValidation) {
     movingPiece->setHasMoved(true);
     whiteToMove = !whiteToMove;
 
+    history.push_back(move);
+
     return true; 
+}
+
+// Undo the last move made. This will require storing a history of moves
+// Important to help with search to avoid deep copying boards
+// TODO: Make sure that the stored history is maintained properly in other areas,
+// such as when needing to reset the history 
+bool Board::undoMove() {
+    if (history.empty()) {
+        return false;
+    }
+    // TOOD: Below currently assumes the history is correct. Add guards
+    // TODO: Fix move so that we can keep piece history and don't have to re-make captured
+
+    Move move = history.back();
+    history.pop_back();
+
+    Piece* captured = createPieceFromSymbol(move.capturedPiece);
+
+    board[move.fromRow][move.fromCol] = board[move.toRow][move.toCol];
+    board[move.toRow][move.toCol] = captured;
+
+    whiteToMove = !whiteToMove;
+
+    return true;
 }
 
 bool Board::isCheckmate(bool white) const {
