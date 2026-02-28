@@ -6,7 +6,7 @@
 
 namespace Search {
     // Forward declaration
-    int minimax(Board board, int depth, int alpha, int beta, bool maximizingPlayer, Evaluator& evaluator, int maxDepth);
+    int minimax(Board& board, int depth, int alpha, int beta, bool maximizingPlayer, Evaluator& evaluator, int maxDepth);
     
     // TODO: Implement  
     Move findBestMove(Board& board, bool whiteToMove, int depth) {
@@ -20,6 +20,8 @@ namespace Search {
             Board boardCopy = board;
             boardCopy.makeMove(move);
             int eval = minimax(boardCopy, depth - 1, std::numeric_limits<int>::min(), std::numeric_limits<int>::max(), !whiteToMove, evaluator, depth);
+
+            std::cout<<move.fromRow<<" "<<move.fromCol<<" "<<move.toRow<<" "<<move.toCol<<" "<<eval<<std::endl;
 
             if (whiteToMove) {
                 if (eval > bestEval) {
@@ -37,27 +39,29 @@ namespace Search {
         return bestMove;
     }
 
-    // TODO: undo moves instead of copying board (pass by reference with undoing)
-    int minimax(Board board, int depth, int alpha, int beta, bool maximizingPlayer, Evaluator& evaluator, int maxDepth) {
+    int minimax(Board& board, int depth, int alpha, int beta, bool maximizingPlayer, Evaluator& evaluator, int maxDepth) {
+        // TODO: Check stalemate
+        if (depth == 0) {
+            return evaluator.evaluate(board);
+        }
+
         std::vector<Move> moves = MoveGenerator::generateSearchMoves(board, maximizingPlayer);
+        // TODO: isCheckmate probably takes long so first check if moves is empty
         if (board.isCheckmate(maximizingPlayer)) {
             return maximizingPlayer ? std::numeric_limits<int>::min() : std::numeric_limits<int>::max(); // checkmate
         }
         if(board.isCheckmate(!maximizingPlayer)) {
             return !maximizingPlayer ? std::numeric_limits<int>::min() : std::numeric_limits<int>::max(); // checkmate
         }
-        // TODO: Check stalemate
-        if (depth == 0) {
-            return evaluator.evaluate(board, maximizingPlayer);
-        }
 
         int bestEval = maximizingPlayer ? std::numeric_limits<int>::min() : std::numeric_limits<int>::max();
 
         for (const Move& move : moves) {
-            Board boardCopy = board;
-            boardCopy.makeMove(move, true);
+            board.makeMove(move, true);
             
-            int eval = minimax(boardCopy, depth - 1, alpha, beta, !maximizingPlayer, evaluator, depth);
+            int eval = minimax(board, depth - 1, alpha, beta, !maximizingPlayer, evaluator, depth);
+
+            board.undoMove();
 
             if (maximizingPlayer) {
                 if (eval > bestEval) {

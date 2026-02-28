@@ -1,4 +1,5 @@
 #include "movegen.h"
+#include <iostream>
 #include "pieces/piece.h"
 
 // Generate all legal moves for the player
@@ -55,7 +56,7 @@ std::vector<Move> MoveGenerator::filterLegalMoves(const Board& board, const std:
     return legalMoves;
 }
 
-// Remove moves that would leave the player's king in check
+// Generate moves for search, which are legal moves sorted by a score (captures prioritized)
 std::vector<Move> MoveGenerator::generateSearchMoves(const Board& board, bool whiteToMove) {
     std::vector<Move> legalMoves = generateLegalMoves(board, whiteToMove);
 
