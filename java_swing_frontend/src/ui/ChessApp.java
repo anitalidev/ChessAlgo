@@ -69,7 +69,7 @@ public class ChessApp {
         boolean legal = BackendBridge.applyMove(move);
         if (legal) {
             boardPanel.updateBoard(BackendBridge.getBoardState()); // <- Syncs Java board with C++
-            // TODO: Maybe should handle Java and C++ board sync in BackendBridge instead
+            // LATER: Maybe should handle Java and C++ board sync in BackendBridge instead
             checkGameOver();
             switchTurn();
         } else {

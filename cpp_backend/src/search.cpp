@@ -8,7 +8,6 @@ namespace Search {
     // Forward declaration
     int minimax(Board& board, int depth, int alpha, int beta, bool maximizingPlayer, Evaluator& evaluator, int maxDepth);
     
-    // TODO: Implement  
     Move findBestMove(Board& board, bool whiteToMove, int depth) {
         std::vector<Move> legalMoves = MoveGenerator::generateSearchMoves(board, whiteToMove);
         Evaluator evaluator;
@@ -21,7 +20,8 @@ namespace Search {
             boardCopy.makeMove(move);
             int eval = minimax(boardCopy, depth - 1, std::numeric_limits<int>::min(), std::numeric_limits<int>::max(), !whiteToMove, evaluator, depth);
 
-            std::cout<<move.fromRow<<" "<<move.fromCol<<" "<<move.toRow<<" "<<move.toCol<<" "<<eval<<std::endl;
+            // For testing if needed: 
+            // std::cout<<move.fromRow<<" "<<move.fromCol<<" "<<move.toRow<<" "<<move.toCol<<" "<<eval<<std::endl;
 
             if (whiteToMove) {
                 if (eval > bestEval) {
@@ -40,14 +40,13 @@ namespace Search {
     }
 
     int minimax(Board& board, int depth, int alpha, int beta, bool maximizingPlayer, Evaluator& evaluator, int maxDepth) {
-        // TODO: Check stalemate
+        // LATER: Check stalemate
         if (depth == 0) {
             return evaluator.evaluate(board);
         }
 
         std::vector<Move> moves = MoveGenerator::generateSearchMoves(board, maximizingPlayer);
-        // TODO: isCheckmate probably takes long so first check if moves is empty
-        if (board.isCheckmate(maximizingPlayer)) {
+        if (moves.empty() && board.isCheckmate(maximizingPlayer)) {
             return maximizingPlayer ? std::numeric_limits<int>::min() : std::numeric_limits<int>::max(); // checkmate
         }
         if(board.isCheckmate(!maximizingPlayer)) {
@@ -84,15 +83,5 @@ namespace Search {
             }
         }
         return bestEval;
-    }
-
-    // TODO: Implement
-    int scoreMoveStatic(Board board, const Move& move) {
-        return -1;
-    }
-
-    // TODO: Implement
-    int scoreMoveWithSearch(Board board, const Move& move, int depth, bool whiteToMove) {
-        return -1;
     }
 } // namespace Search

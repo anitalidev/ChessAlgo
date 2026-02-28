@@ -131,7 +131,7 @@ public class BoardPanel extends JPanel {
             g.fillRect(selectedSquare.y * TILE_SIZE, selectedSquare.x * TILE_SIZE, TILE_SIZE, TILE_SIZE);
         }
 
-        // TODO: Highlight king with red, if in check. Low priority
+        // LATER: Highlight king with red, if in check. Low priority
 
         for (int row = 0; row < 8; row++) {
             for (int col = 0; col < 8; col++) {
@@ -146,7 +146,7 @@ public class BoardPanel extends JPanel {
     }
 
     private java.util.List<Point> getLegalDestinationsFrom(int row, int col) {
-        // TODO: Implement getting legal moves from just one square instead of having to filter legal moves for all squares
+        // LATER: Implement getting legal moves from just one square instead of having to filter legal moves for all squares
         if (board[row][col] == null || Character.isUpperCase(board[row][col].charAt(0)) != ChessApp.whiteToMove())
                 return new ArrayList<>(); // not legal to "move" an empty square or piece of different colour
 

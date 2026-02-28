@@ -39,7 +39,7 @@ void Board::loadFEN(const std::string& fen) {
     std::istringstream ss(fen);
     std::string boardPart, activeColor;
 
-    ss >> boardPart >> activeColor; // TODO: Add castling rights
+    ss >> boardPart >> activeColor; // LATER: Add castling rights (not really implementable until castling is implemented)
 
     int row = 0, col = 0;
 

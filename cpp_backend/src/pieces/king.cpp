@@ -27,7 +27,7 @@ std::vector<Move> King::generateMoves(int row, int col, const Board& board) cons
         }
     }
 
-    // TODO: Add castling when rook and king haven't moved
+    // LATER: Add castling when rook and king haven't moved
 
     return moves;
 }

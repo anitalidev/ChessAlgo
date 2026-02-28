@@ -21,17 +21,6 @@ std::vector<Move> MoveGenerator::generateMoves(const Board& board, bool whiteToM
                     move.movingPiece = piece->getSymbol();
                     Piece* capt = board.getPiece(move.toRow, move.toCol);
                     if (capt) move.capturedPiece = capt->getSymbol();
-
-                    // Defensive bounds check
-                    if (move.toRow >= 0 && move.toRow < 8 &&
-                        move.toCol >= 0 && move.toCol < 8 &&
-                        move.fromRow >= 0 && move.fromRow < 8 &&
-                        move.fromCol >= 0 && move.fromCol < 8) {
-                        allMoves.push_back(move);
-                    } else {
-                        std::cerr << "Invalid move generated: from (" << move.fromRow << "," << move.fromCol
-                                  << ") to (" << move.toRow << "," << move.toCol << ")" << std::endl;
-                    }
                 }
             }
         }
@@ -43,14 +32,16 @@ std::vector<Move> MoveGenerator::generateMoves(const Board& board, bool whiteToM
 // Remove moves that would leave the player's king in check
 std::vector<Move> MoveGenerator::filterLegalMoves(const Board& board, const std::vector<Move>& pseudoMoves, bool whiteToMove) {
     std::vector<Move> legalMoves;
+    Board copy = board;
 
     for (const Move& move : pseudoMoves) {
-        Board copy = board;
         copy.makeMove(move, true);  // simulate/"try out" the move
 
         if (!copy.isKingInCheck(whiteToMove)) {
             legalMoves.push_back(move);
         }
+
+        copy.undoMove();
     }
 
     return legalMoves;
@@ -66,7 +57,6 @@ std::vector<Move> MoveGenerator::generateSearchMoves(const Board& board, bool wh
 
         if (val == 0) {
             // Just simply moved the piece
-            // TODO: Maybe implement preference of moving some pieces over other. eg. don't move king
         } else {
             val -= getCaptureValue(move.movingPiece); // Capturing with smaller value is less risky
         }

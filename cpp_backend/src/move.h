@@ -10,7 +10,6 @@ struct Move {
     
     Move(int fr, int fc, int tr, int tc) : fromRow(fr), fromCol(fc), toRow(tr), toCol(tc), movingPiece('.'), capturedPiece('.') {} 
     // '.' = empty square
-    // TODO: ^ kind of risky
 
     Move(int fr, int fc, int tr, int tc, char mp) : fromRow(fr), fromCol(fc), toRow(tr), toCol(tc), movingPiece(mp), capturedPiece('.') {} 
     // '.' = empty square

@@ -40,8 +40,8 @@ std::vector<Move> Pawn::generateMoves(int row, int col, const Board& board) cons
         }
     }
 
-    // TODO: en passant
-    // TODO: promotion
+    // LATER: en passant
+    // LATER: promotion
 
     return moves;
 }
