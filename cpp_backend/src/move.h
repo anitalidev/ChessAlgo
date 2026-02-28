@@ -8,6 +8,10 @@ struct Move {
     Move() : fromRow(0), fromCol(0), toRow(0), toCol(0) {}
     
     Move(int fr, int fc, int tr, int tc) : fromRow(fr), fromCol(fc), toRow(tr), toCol(tc) {} 
+
+    bool operator==(const Move& other) const {
+        return fromRow == other.fromRow && fromCol == other.fromCol && toRow == other.toRow && toCol == other.toCol;
+    }
 };
 
 #endif

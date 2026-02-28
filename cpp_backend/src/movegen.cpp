@@ -1,6 +1,7 @@
 #include "movegen.h"
 #include <iostream>
 #include "pieces/piece.h"
+#include "search.h"
 
 // Generate all legal moves for the player
 std::vector<Move> MoveGenerator::generateLegalMoves(const Board& board, bool whiteToMove) {
@@ -41,34 +42,6 @@ std::vector<Move> MoveGenerator::filterLegalMoves(const Board& board, const std:
 
         copy.undoMove();
     }
-
-    return legalMoves;
-}
-
-// Generate moves for search, which are legal moves sorted by a score (captures prioritized)
-std::vector<Move> MoveGenerator::generateSearchMoves(const Board& board, bool whiteToMove) {
-    std::vector<Move> legalMoves = generateLegalMoves(board, whiteToMove);
-
-    // Precompute score values to use in sort below
-    for (Move& move : legalMoves) {
-        Piece* captured = board.getPiece(move.toRow, move.toCol);
-        Piece* moving = board.getPiece(move.fromRow, move.fromCol);
-        int val;
-
-        if (captured) {
-            val = getCaptureValue(captured->getSymbol());
-            val -= getCaptureValue(moving->getSymbol()); // If causes error something is very wrong.
-        } else {
-            val = 0;
-        }
-
-        move.score = val;
-    }
-
-    // Sort moves by their score value. 
-    sort(legalMoves.begin(), legalMoves.end(), [](const Move& moveA, const Move& moveB) {
-        return moveA.score > moveB.score;
-    });
 
     return legalMoves;
 }
