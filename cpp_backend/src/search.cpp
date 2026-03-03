@@ -3,11 +3,15 @@
 #include "evaluate.h"
 #include <limits>
 #include <iostream>
+#include <chrono>
 
 namespace Search {
     static const int MAX_DEPTH = 64; // Probably will never end up using this much
     static const int MATE = 100000; // score for a checkmate (very large)
     const int INF = 1000000; // int_min but we want to avoid overflow!
+
+    long long count; // for testing purposes, counts amount of nodes in a search
+    double time;
 
     static Move killerMoves[MAX_DEPTH][2];
     // To store quiet (non-capture) moves that killed using beta <= alpha in previous (maybe-siblings/cousins)
@@ -24,7 +28,13 @@ namespace Search {
     std::vector<Move> generateSearchMoves(const Board& board, int ply, bool whiteToMove);
     
     Move findBestMove(Board& board, bool whiteToMove, int depth) {
+        count = 0;
+        time = 0;
+        auto start = std::chrono::high_resolution_clock::now(); // for testing
         std::vector<Move> legalMoves = generateSearchMoves(board, 0, whiteToMove);
+        auto end = std::chrono::high_resolution_clock::now(); // testing
+        time += std::chrono::duration<double>(end - start).count(); // testing
+
         Evaluator evaluator;
         int bestEval = -INF;
         if (legalMoves.empty()) return Move();
@@ -44,28 +54,39 @@ namespace Search {
             }
         }
 
+        std::cout<<"Node count: "<<count<<std::endl;
+        std::cout<<"Time (in seconds): "<<time<<std::endl;
+
         return bestMove;
     }
 
     // minimum is same as maximizing the negative!
     // Try to use an even valued depth to avoid choosing paths that do a bad capture as their last move.
     int negamax(Board& board, int depth, int alpha, int beta, Evaluator& evaluator, int maxDepth) {
-        // LATER: Check stalemate
+        ++count;
         if (depth == 0) {
             // 0 measurement of the "potential" in a board
             // If no moves take then either it goes for a bad result or goes for a random move... not great. 
             return evaluator.evaluate(board);
         }
 
+        auto start = std::chrono::high_resolution_clock::now(); // for testing
         std::vector<Move> moves = generateSearchMoves(board, maxDepth - depth, board.getWhiteToMove());
-        if (moves.empty() && board.isCheckmate(board.getWhiteToMove())) {
-            return -MATE; // checkmate
-        }
+        auto end = std::chrono::high_resolution_clock::now(); // testing
+        time += std::chrono::duration<double>(end - start).count(); // testing
 
         int bestEval = -INF;
+        bool tried = false;
 
         for (const Move& move : moves) {
-            board.makeMove(move, true);                
+            board.makeMove(move, true);
+            // If move leaves us in check → illegal
+            if (board.isKingInCheck(!board.getWhiteToMove())) {
+                board.undoMove();
+                continue;
+            }
+            tried = true;
+
             int eval = -negamax(board, depth - 1, -beta, -alpha, evaluator, maxDepth);
             board.undoMove();
 
@@ -84,16 +105,25 @@ namespace Search {
                 // so your alpha only goes up. 
             }
         }
+
+        if (!tried) {
+            if (board.isCheckmate(board.getWhiteToMove())) {
+                return -MATE; // checkmate
+            } else {
+                return 0; // stalemate
+            }
+        }
+
         return bestEval;
     } 
 
     // Generate moves for a search, which are legal moves sorted by a score (captures prioritized)
     // NOTE: This method of sorting favours trading pieces over passive playing which is... interesting to note!
     std::vector<Move> generateSearchMoves(const Board& board, int ply, bool whiteToMove) {
-        std::vector<Move> legalMoves = MoveGenerator::generateLegalMoves(board, whiteToMove);
+        std::vector<Move> moves = MoveGenerator::generateMoves(board, whiteToMove);
 
         // Precompute score values to use in sort below
-        for (Move& move : legalMoves) {
+        for (Move& move : moves) {
             if (move == Search::killerMoves[ply][0]) {
                 move.score = 5000; // rather large score, 0 = more recent killer move
                 continue;
@@ -119,11 +149,11 @@ namespace Search {
         }
 
         // Sort moves by their score value. 
-        sort(legalMoves.begin(), legalMoves.end(), [](const Move& moveA, const Move& moveB) {
+        sort(moves.begin(), moves.end(), [](const Move& moveA, const Move& moveB) {
             return moveA.score > moveB.score;
         });
 
-        return legalMoves;
+        return moves;
     }
 
     int getCaptureValue(char symbol) {

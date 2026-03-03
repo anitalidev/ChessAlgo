@@ -7,6 +7,7 @@
 #include "movegen.h"
 #include "search.h"
 
+
 #include <iostream> // For debugging
 
 static Board board;
@@ -87,7 +88,7 @@ JNIEXPORT jobjectArray JNICALL Java_engine_BackendBridge_getLegalMoves(JNIEnv* e
 }
 
 JNIEXPORT jstring JNICALL Java_engine_BackendBridge_getSuggestedMove(JNIEnv* env, jclass) {
-    Move suggested = Search::findBestMove(board, board.getWhiteToMove(), 6);
+    Move suggested = Search::findBestMove(board, board.getWhiteToMove(), 4);
 
     std::string moveStr = moveToAlgebraic(suggested);
     return env->NewStringUTF(moveStr.c_str());
