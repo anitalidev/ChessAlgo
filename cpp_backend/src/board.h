@@ -40,7 +40,7 @@ public:
     // Undo the last move made. This will require storing a history of moves
     bool undoMove();
 
-    bool getWhiteToMove();
+    bool getWhiteToMove() const;
 
 private:
     Piece* board[8][8]; // nullptr if square is empty

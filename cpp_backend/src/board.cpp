@@ -215,7 +215,7 @@ Board::Board(const Board& other) {
     whiteToMove = other.whiteToMove;
 }
 
-bool Board::getWhiteToMove() {
+bool Board::getWhiteToMove() const {
     return whiteToMove;
 }
 

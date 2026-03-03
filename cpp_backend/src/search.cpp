@@ -6,6 +6,8 @@
 
 namespace Search {
     static const int MAX_DEPTH = 64; // Probably will never end up using this much
+    static const int MATE = 100000; // score for a checkmate (very large)
+    const int INF = 1000000; // int_min but we want to avoid overflow!
 
     static Move killerMoves[MAX_DEPTH][2];
     // To store quiet (non-capture) moves that killed using beta <= alpha in previous (maybe-siblings/cousins)
@@ -16,90 +18,70 @@ namespace Search {
 
 
     // Forward declarations
-    // IMPORTANT: With current implementation, maxDepth must stay constant through all related calls
+    // IMPORTANT: With current implementation, maxDepth must stay constant through all related calls (for killer-moves)
     int minimax(Board& board, int depth, int alpha, int beta, bool maximizingPlayer, Evaluator& evaluator, int maxDepth);
+    int negamax(Board& board, int depth, int alpha, int beta, Evaluator& evaluator, int maxDepth);
     std::vector<Move> generateSearchMoves(const Board& board, int ply, bool whiteToMove);
     
     Move findBestMove(Board& board, bool whiteToMove, int depth) {
         std::vector<Move> legalMoves = generateSearchMoves(board, 0, whiteToMove);
         Evaluator evaluator;
-        int bestEval = whiteToMove ? std::numeric_limits<int>::min() : std::numeric_limits<int>::max();
+        int bestEval = -INF;
         if (legalMoves.empty()) return Move();
         Move bestMove = legalMoves[0]; 
 
         for (const Move& move : legalMoves) {
-            Board boardCopy = board;
-            boardCopy.makeMove(move);
-            int eval = minimax(boardCopy, depth - 1, std::numeric_limits<int>::min(), std::numeric_limits<int>::max(), !whiteToMove, evaluator, depth);
+            board.makeMove(move);
+            int eval = -negamax(board, depth - 1, -INF, INF, evaluator, depth);
+            board.undoMove();
 
             // For testing if needed: 
             // std::cout<<move.fromRow<<" "<<move.fromCol<<" "<<move.toRow<<" "<<move.toCol<<" "<<eval<<std::endl;
 
-            if (whiteToMove) {
-                if (eval > bestEval) {
-                    bestEval = eval;
-                    bestMove = move;
-                }
-            } else {
-                if (eval < bestEval) {
-                    bestEval = eval;
-                    bestMove = move;
-                }
+            if (eval > bestEval) {
+                bestEval = eval;
+                bestMove = move;
             }
         }
 
         return bestMove;
     }
 
-    int minimax(Board& board, int depth, int alpha, int beta, bool maximizingPlayer, Evaluator& evaluator, int maxDepth) {
+    // minimum is same as maximizing the negative!
+    // Try to use an even valued depth to avoid choosing paths that do a bad capture as their last move.
+    int negamax(Board& board, int depth, int alpha, int beta, Evaluator& evaluator, int maxDepth) {
         // LATER: Check stalemate
         if (depth == 0) {
+            // 0 measurement of the "potential" in a board
+            // If no moves take then either it goes for a bad result or goes for a random move... not great. 
             return evaluator.evaluate(board);
         }
 
-        std::vector<Move> moves = generateSearchMoves(board, maxDepth - depth, maximizingPlayer);
-        if (moves.empty() && board.isCheckmate(maximizingPlayer)) {
-            return maximizingPlayer ? std::numeric_limits<int>::min() : std::numeric_limits<int>::max(); // checkmate
-        }
-        if(board.isCheckmate(!maximizingPlayer)) {
-            return !maximizingPlayer ? std::numeric_limits<int>::min() : std::numeric_limits<int>::max(); // checkmate
+        std::vector<Move> moves = generateSearchMoves(board, maxDepth - depth, board.getWhiteToMove());
+        if (moves.empty() && board.isCheckmate(board.getWhiteToMove())) {
+            return -MATE; // checkmate
         }
 
-        int bestEval = maximizingPlayer ? std::numeric_limits<int>::min() : std::numeric_limits<int>::max();
+        int bestEval = -INF;
 
         for (const Move& move : moves) {
             board.makeMove(move, true);                
-            int eval = minimax(board, depth - 1, alpha, beta, !maximizingPlayer, evaluator, depth);
+            int eval = -negamax(board, depth - 1, -beta, -alpha, evaluator, maxDepth);
             board.undoMove();
 
-            if (maximizingPlayer) {
-                if (eval > bestEval) {
-                    bestEval = eval;
-                }
-                alpha = std::max(alpha, eval); // You are a maximizing node so you would like to maximize the eval
+            if (eval > bestEval) {
+                bestEval = eval;
+            }
+            alpha = std::max(alpha, eval); // You are a maximizing node so you would like to maximize the eval
 
-                if (beta <= alpha) {
-                    if (!board.getPiece(move.toRow, move.toCol)) {
-                        killerMoves[maxDepth - depth][1] = killerMoves[maxDepth - depth][0];
-                        killerMoves[maxDepth - depth][0] = move;
-                    }
-                    break; // if beta <= alpha, that means your parent (a minimizer) has found a path with value beta,
-                    // and since it wants to minimze, then it will never choose you, alpha, since you're maximizing
-                    // so your alpha only goes up. 
+            if (beta <= alpha) {
+                if (!board.getPiece(move.toRow, move.toCol)) {
+                    killerMoves[maxDepth - depth][1] = killerMoves[maxDepth - depth][0];
+                    killerMoves[maxDepth - depth][0] = move;
                 }
-            } else {
-                if (eval < bestEval) {
-                    bestEval = eval; 
-                }
-                beta = std::min(beta, eval); // You are a minimizing node so you would like to maximize the eval
-
-                if (beta <= alpha) {
-                    if (!board.getPiece(move.toRow, move.toCol)) {
-                        killerMoves[maxDepth - depth][1] = killerMoves[maxDepth - depth][0];
-                        killerMoves[maxDepth - depth][0] = move;
-                    }
-                    break; 
-                }
+                break; // if beta <= alpha, that means your parent (a minimizer) has found a path with value beta,
+                // and since it wants to minimze, then it will never choose you, alpha, since you're maximizing
+                // so your alpha only goes up. 
             }
         }
         return bestEval;
@@ -155,4 +137,61 @@ namespace Search {
             default: return 0;
         }
     }
+
+    // Retired from use:
+    /*
+    int minimax(Board& board, int depth, int alpha, int beta, bool maximizingPlayer, Evaluator& evaluator, int maxDepth) {
+        // LATER: Check stalemate
+        if (depth == 0) {
+            return evaluator.evaluate(board);
+        }
+
+        std::vector<Move> moves = generateSearchMoves(board, maxDepth - depth, maximizingPlayer);
+        if (moves.empty() && board.isCheckmate(maximizingPlayer)) {
+            return maximizingPlayer ? std::numeric_limits<int>::min() : std::numeric_limits<int>::max(); // checkmate
+        }
+        if(board.isCheckmate(!maximizingPlayer)) {
+            return !maximizingPlayer ? std::numeric_limits<int>::min() : std::numeric_limits<int>::max(); // checkmate
+        }
+
+        int bestEval = maximizingPlayer ? std::numeric_limits<int>::min() : std::numeric_limits<int>::max();
+
+        for (const Move& move : moves) {
+            board.makeMove(move, true);                
+            int eval = minimax(board, depth - 1, alpha, beta, !maximizingPlayer, evaluator, maxDepth);
+            board.undoMove();
+
+            if (maximizingPlayer) {
+                if (eval > bestEval) {
+                    bestEval = eval;
+                }
+                alpha = std::max(alpha, eval); // You are a maximizing node so you would like to maximize the eval
+
+                if (beta <= alpha) {
+                    if (!board.getPiece(move.toRow, move.toCol)) {
+                        killerMoves[maxDepth - depth][1] = killerMoves[maxDepth - depth][0];
+                        killerMoves[maxDepth - depth][0] = move;
+                    }
+                    break; // if beta <= alpha, that means your parent (a minimizer) has found a path with value beta,
+                    // and since it wants to minimze, then it will never choose you, alpha, since you're maximizing
+                    // so your alpha only goes up. 
+                }
+            } else {
+                if (eval < bestEval) {
+                    bestEval = eval; 
+                }
+                beta = std::min(beta, eval); // You are a minimizing node so you would like to maximize the eval
+
+                if (beta <= alpha) {
+                    if (!board.getPiece(move.toRow, move.toCol)) {
+                        killerMoves[maxDepth - depth][1] = killerMoves[maxDepth - depth][0];
+                        killerMoves[maxDepth - depth][0] = move;
+                    }
+                    break; 
+                }
+            }
+        }
+        return bestEval;
+    } 
+    */
 } // namespace Search
