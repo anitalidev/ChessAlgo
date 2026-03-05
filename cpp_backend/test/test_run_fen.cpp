@@ -71,7 +71,6 @@ int main(int argc, char* argv[]) {
         Board board;
         board.loadFEN(fen);
 
-        MoveGenerator moveGen;
         constexpr int kSearchDepth = 8;
         int moveCount = 0;
         constexpr int kMaxMoves = 50; // Safety limit to prevent infinite loops

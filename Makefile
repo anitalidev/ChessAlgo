@@ -1,9 +1,14 @@
 CXX = g++
 
+SEARCH_DEBUG_LOGS ?= 0
+SEARCH_PERF_LOGS ?= 1
+SEARCH_LOG_DEFINES = -DSEARCH_DEBUG_LOGS=$(SEARCH_DEBUG_LOGS) -DSEARCH_PERF_LOGS=$(SEARCH_PERF_LOGS)
+
 CXXFLAGS = -std=c++17 -fPIC \
   -I"$(JAVA_HOME)/include" \
   -I"$(JAVA_HOME)/include/darwin" \
-  -Icpp_backend/src
+  -Icpp_backend/src \
+  $(SEARCH_LOG_DEFINES)
 
 SRC = cpp_backend/src/BackendBridge.cpp \
       cpp_backend/src/board.cpp \
@@ -32,7 +37,7 @@ java:
 	@echo "Java build complete."
 
 test:
-	$(MAKE) -C cpp_backend/test
+	$(MAKE) -C cpp_backend/test SEARCH_DEBUG_LOGS=$(SEARCH_DEBUG_LOGS) SEARCH_PERF_LOGS=$(SEARCH_PERF_LOGS)
 
 clean:
 	rm -f $(TARGET)

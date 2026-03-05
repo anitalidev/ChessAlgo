@@ -6,6 +6,26 @@
 #include <chrono>
 #include <iomanip>
 
+#ifndef SEARCH_DEBUG_LOGS
+#define SEARCH_DEBUG_LOGS 0
+#endif
+
+#ifndef SEARCH_PERF_LOGS
+#define SEARCH_PERF_LOGS 1
+#endif
+
+#if SEARCH_DEBUG_LOGS
+#define SEARCH_DEBUG(stmt) do { stmt; } while (0)
+#else
+#define SEARCH_DEBUG(stmt) do {} while (0)
+#endif
+
+#if SEARCH_PERF_LOGS
+#define SEARCH_PERF(stmt) do { stmt; } while (0)
+#else
+#define SEARCH_PERF(stmt) do {} while (0)
+#endif
+
 namespace Search {
     static const int MAX_DEPTH = 64; // Probably will never end up using this much
     static const int MATE = 100000; // score for a checkmate (very large)
@@ -37,13 +57,15 @@ namespace Search {
         time += std::chrono::duration<double>(end - start).count(); // testing
 
         double moveGenTime = std::chrono::duration<double>(end - start).count();
-        std::cerr << "[PERF] Move generation: " << legalMoves.size() << " moves generated in "
-                  << std::fixed << std::setprecision(3) << (moveGenTime * 1000) << "ms" << std::endl;
+        SEARCH_PERF(
+            std::cerr << "[PERF] Move generation: " << legalMoves.size() << " moves generated in "
+                      << std::fixed << std::setprecision(3) << (moveGenTime * 1000) << "ms\n";
+        );
 
         Evaluator evaluator;
         int bestEval = -INF;
         if (legalMoves.empty()) {
-            std::cerr << "[DEBUG] findBestMove: No legal moves available!" << std::endl;
+            SEARCH_DEBUG(std::cerr << "[DEBUG] findBestMove: No legal moves available!\n";);
             return Move();
         }
         Move bestMove = legalMoves[0];
@@ -65,17 +87,27 @@ namespace Search {
         auto searchEnd = std::chrono::high_resolution_clock::now();
         double searchTime = std::chrono::duration<double>(searchEnd - searchStart).count();
 
-        std::cerr << "[PERF] ========== SEARCH SUMMARY ==========" << std::endl;
-        std::cerr << "[PERF] Search depth: " << depth << std::endl;
-        std::cerr << "[PERF] Node count: " << count << std::endl;
-        std::cerr << "[PERF] Time (move generation): " << std::fixed << std::setprecision(3) << (moveGenTime * 1000) << "ms" << std::endl;
-        std::cerr << "[PERF] Time (negamax search): " << std::fixed << std::setprecision(3) << (searchTime * 1000) << "ms" << std::endl;
-        std::cerr << "[PERF] Time (total): " << std::fixed << std::setprecision(3) << ((moveGenTime + searchTime) * 1000) << "ms" << std::endl;
-        std::cerr << "[PERF] Nodes per second: " << std::fixed << std::setprecision(0) << (count / (moveGenTime + searchTime)) << std::endl;
-        std::cerr << "[PERF] Best eval: " << bestEval << std::endl;
-        std::cerr << "[PERF] Best move: " << (char)('a' + bestMove.fromCol) << (char)('8' - bestMove.fromRow)
-                  << (char)('a' + bestMove.toCol) << (char)('8' - bestMove.toRow) << std::endl;
-        std::cerr << "[PERF] =====================================" << std::endl;
+#if SEARCH_PERF_LOGS
+        double totalTime = moveGenTime + searchTime;
+        double nodesPerSecond = totalTime > 0.0 ? (static_cast<double>(count) / totalTime) : 0.0;
+
+        SEARCH_PERF(
+            std::cerr << "[PERF] ========== SEARCH SUMMARY ==========\n";
+            std::cerr << "[PERF] Search depth: " << depth << "\n";
+            std::cerr << "[PERF] Node count: " << count << "\n";
+            std::cerr << "[PERF] Time (move generation): " << std::fixed << std::setprecision(3) << (moveGenTime * 1000) << "ms\n";
+            std::cerr << "[PERF] Time (negamax search): " << std::fixed << std::setprecision(3) << (searchTime * 1000) << "ms\n";
+            std::cerr << "[PERF] Time (total): " << std::fixed << std::setprecision(3) << (totalTime * 1000) << "ms\n";
+            std::cerr << "[PERF] Nodes per second: " << std::fixed << std::setprecision(0) << nodesPerSecond << "\n";
+            std::cerr << "[PERF] Best eval: " << bestEval << "\n";
+            std::cerr << "[PERF] Best move: " << (char)('a' + bestMove.fromCol) << (char)('8' - bestMove.fromRow)
+                      << (char)('a' + bestMove.toCol) << (char)('8' - bestMove.toRow) << "\n";
+            std::cerr << "[PERF] =====================================\n";
+        );
+#else
+        (void)moveGenTime;
+        (void)searchTime;
+#endif
 
         return bestMove;
     }
@@ -88,9 +120,11 @@ namespace Search {
             // 0 measurement of the "potential" in a board
             // If no moves take then either it goes for a bad result or goes for a random move... not great. 
             int eval = evaluator.evaluate(board);
-            if (maxDepth - depth <= 2) {
-                std::cerr << "[DEBUG] Leaf node evaluation: " << eval << std::endl;
-            }
+            SEARCH_DEBUG(
+                if (maxDepth - depth <= 2) {
+                    std::cerr << "[DEBUG] Leaf node evaluation: " << eval << "\n";
+                }
+            );
             return eval;
         }
 
@@ -101,14 +135,18 @@ namespace Search {
         double moveGenTime = std::chrono::duration<double>(end - start).count();
         time += moveGenTime; // testing
 
-        if (ply <= 2) {
-            std::cerr << "[DEBUG] Depth " << ply << ": Generated " << moves.size() << " moves in "
-                      << std::fixed << std::setprecision(3) << (moveGenTime * 1000) << "ms" << std::endl;
-        }
+        SEARCH_DEBUG(
+            if (ply <= 2) {
+                std::cerr << "[DEBUG] Depth " << ply << ": Generated " << moves.size() << " moves in "
+                          << std::fixed << std::setprecision(3) << (moveGenTime * 1000) << "ms\n";
+            }
+        );
 
         int bestEval = -INF;
         bool tried = false;
+#if SEARCH_DEBUG_LOGS
         int movesTried = 0;
+#endif
 
         for (const Move& move : moves) {
             board.makeMove(move, true);
@@ -118,16 +156,20 @@ namespace Search {
                 continue;
             }
             tried = true;
+#if SEARCH_DEBUG_LOGS
             movesTried++;
+#endif
 
             int eval = -negamax(board, depth - 1, -beta, -alpha, evaluator, maxDepth);
             board.undoMove();
 
-            if (ply <= 1) {
-                std::cerr << "[DEBUG] Depth " << ply << ": Move " << (char)('a' + move.fromCol)
-                          << (char)('8' - move.fromRow) << (char)('a' + move.toCol) << (char)('8' - move.toRow)
-                          << " evaluated to " << eval << std::endl;
-            }
+            SEARCH_DEBUG(
+                if (ply <= 1) {
+                    std::cerr << "[DEBUG] Depth " << ply << ": Move " << (char)('a' + move.fromCol)
+                              << (char)('8' - move.fromRow) << (char)('a' + move.toCol) << (char)('8' - move.toRow)
+                              << " evaluated to " << eval << "\n";
+                }
+            );
 
             if (eval > bestEval) {
                 bestEval = eval;
@@ -139,9 +181,11 @@ namespace Search {
                     killerMoves[maxDepth - depth][1] = killerMoves[maxDepth - depth][0];
                     killerMoves[maxDepth - depth][0] = move;
                 }
-                if (ply <= 2) {
-                    std::cerr << "[DEBUG] Depth " << ply << ": Beta cutoff after " << movesTried << " moves" << std::endl;
-                }
+                SEARCH_DEBUG(
+                    if (ply <= 2) {
+                        std::cerr << "[DEBUG] Depth " << ply << ": Beta cutoff after " << movesTried << " moves\n";
+                    }
+                );
                 break; // if beta <= alpha, that means your parent (a minimizer) has found a path with value beta,
                 // and since it wants to minimze, then it will never choose you, alpha, since you're maximizing
                 // so your alpha only goes up. 
@@ -267,3 +311,4 @@ namespace Search {
     } 
     */
 } // namespace Search
+
