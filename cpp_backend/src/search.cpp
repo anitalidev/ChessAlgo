@@ -4,6 +4,7 @@
 #include <limits>
 #include <iostream>
 #include <chrono>
+#include <iomanip>
 
 namespace Search {
     static const int MAX_DEPTH = 64; // Probably will never end up using this much
@@ -35,11 +36,19 @@ namespace Search {
         auto end = std::chrono::high_resolution_clock::now(); // testing
         time += std::chrono::duration<double>(end - start).count(); // testing
 
+        double moveGenTime = std::chrono::duration<double>(end - start).count();
+        std::cerr << "[PERF] Move generation: " << legalMoves.size() << " moves generated in "
+                  << std::fixed << std::setprecision(3) << (moveGenTime * 1000) << "ms" << std::endl;
+
         Evaluator evaluator;
         int bestEval = -INF;
-        if (legalMoves.empty()) return Move();
-        Move bestMove = legalMoves[0]; 
+        if (legalMoves.empty()) {
+            std::cerr << "[DEBUG] findBestMove: No legal moves available!" << std::endl;
+            return Move();
+        }
+        Move bestMove = legalMoves[0];
 
+        auto searchStart = std::chrono::high_resolution_clock::now();
         for (const Move& move : legalMoves) {
             board.makeMove(move);
             int eval = -negamax(board, depth - 1, -INF, INF, evaluator, depth);
@@ -53,9 +62,20 @@ namespace Search {
                 bestMove = move;
             }
         }
+        auto searchEnd = std::chrono::high_resolution_clock::now();
+        double searchTime = std::chrono::duration<double>(searchEnd - searchStart).count();
 
-        std::cout<<"Node count: "<<count<<std::endl;
-        std::cout<<"Time (in seconds): "<<time<<std::endl;
+        std::cerr << "[PERF] ========== SEARCH SUMMARY ==========" << std::endl;
+        std::cerr << "[PERF] Search depth: " << depth << std::endl;
+        std::cerr << "[PERF] Node count: " << count << std::endl;
+        std::cerr << "[PERF] Time (move generation): " << std::fixed << std::setprecision(3) << (moveGenTime * 1000) << "ms" << std::endl;
+        std::cerr << "[PERF] Time (negamax search): " << std::fixed << std::setprecision(3) << (searchTime * 1000) << "ms" << std::endl;
+        std::cerr << "[PERF] Time (total): " << std::fixed << std::setprecision(3) << ((moveGenTime + searchTime) * 1000) << "ms" << std::endl;
+        std::cerr << "[PERF] Nodes per second: " << std::fixed << std::setprecision(0) << (count / (moveGenTime + searchTime)) << std::endl;
+        std::cerr << "[PERF] Best eval: " << bestEval << std::endl;
+        std::cerr << "[PERF] Best move: " << (char)('a' + bestMove.fromCol) << (char)('8' - bestMove.fromRow)
+                  << (char)('a' + bestMove.toCol) << (char)('8' - bestMove.toRow) << std::endl;
+        std::cerr << "[PERF] =====================================" << std::endl;
 
         return bestMove;
     }
@@ -67,16 +87,28 @@ namespace Search {
         if (depth == 0) {
             // 0 measurement of the "potential" in a board
             // If no moves take then either it goes for a bad result or goes for a random move... not great. 
-            return evaluator.evaluate(board);
+            int eval = evaluator.evaluate(board);
+            if (maxDepth - depth <= 2) {
+                std::cerr << "[DEBUG] Leaf node evaluation: " << eval << std::endl;
+            }
+            return eval;
         }
 
+        int ply = maxDepth - depth;
         auto start = std::chrono::high_resolution_clock::now(); // for testing
-        std::vector<Move> moves = generateSearchMoves(board, maxDepth - depth, board.getWhiteToMove());
+        std::vector<Move> moves = generateSearchMoves(board, ply, board.getWhiteToMove());
         auto end = std::chrono::high_resolution_clock::now(); // testing
-        time += std::chrono::duration<double>(end - start).count(); // testing
+        double moveGenTime = std::chrono::duration<double>(end - start).count();
+        time += moveGenTime; // testing
+
+        if (ply <= 2) {
+            std::cerr << "[DEBUG] Depth " << ply << ": Generated " << moves.size() << " moves in "
+                      << std::fixed << std::setprecision(3) << (moveGenTime * 1000) << "ms" << std::endl;
+        }
 
         int bestEval = -INF;
         bool tried = false;
+        int movesTried = 0;
 
         for (const Move& move : moves) {
             board.makeMove(move, true);
@@ -86,9 +118,16 @@ namespace Search {
                 continue;
             }
             tried = true;
+            movesTried++;
 
             int eval = -negamax(board, depth - 1, -beta, -alpha, evaluator, maxDepth);
             board.undoMove();
+
+            if (ply <= 1) {
+                std::cerr << "[DEBUG] Depth " << ply << ": Move " << (char)('a' + move.fromCol)
+                          << (char)('8' - move.fromRow) << (char)('a' + move.toCol) << (char)('8' - move.toRow)
+                          << " evaluated to " << eval << std::endl;
+            }
 
             if (eval > bestEval) {
                 bestEval = eval;
@@ -99,6 +138,9 @@ namespace Search {
                 if (!board.getPiece(move.toRow, move.toCol)) {
                     killerMoves[maxDepth - depth][1] = killerMoves[maxDepth - depth][0];
                     killerMoves[maxDepth - depth][0] = move;
+                }
+                if (ply <= 2) {
+                    std::cerr << "[DEBUG] Depth " << ply << ": Beta cutoff after " << movesTried << " moves" << std::endl;
                 }
                 break; // if beta <= alpha, that means your parent (a minimizer) has found a path with value beta,
                 // and since it wants to minimze, then it will never choose you, alpha, since you're maximizing

@@ -6,6 +6,16 @@
 #include <sstream>
 #include <cctype>
 
+namespace {
+bool inBounds(int row, int col) {
+    return row >= 0 && row < 8 && col >= 0 && col < 8;
+}
+
+bool moveInBounds(const Move& move) {
+    return inBounds(move.fromRow, move.fromCol) && inBounds(move.toRow, move.toCol);
+}
+}
+
 Board::Board() {
     for (int r = 0; r < 8; ++r)
         for (int c = 0; c < 8; ++c)
@@ -19,10 +29,17 @@ Board::~Board() {
 }
 
 Piece* Board::getPiece(int row, int col) const {
+    if (!inBounds(row, col)) {
+        return nullptr;
+    }
     return board[row][col];
 }
 
 void Board::setPiece(int row, int col, Piece* piece) {
+    if (!inBounds(row, col)) {
+        delete piece;
+        return;
+    }
     delete board[row][col];  // Avoid memory leak
     board[row][col] = piece;
 }
@@ -35,6 +52,11 @@ void Board::loadFEN(const std::string& fen) {
         for (int c = 0; c < 8; ++c)
             removePiece(r, c);
 
+    // Captured pieces are owned by undo history; release them when resetting position.
+    for (const UndoState& state : history) {
+        delete state.capturedPiece;
+    }
+    history.clear();
 
     std::istringstream ss(fen);
     std::string boardPart, activeColor;
@@ -62,6 +84,9 @@ void Board::loadFEN(const std::string& fen) {
 }
 
 void Board::removePiece(int row, int col) {
+    if (!inBounds(row, col)) {
+        return;
+    }
     delete board[row][col];
     board[row][col] = nullptr;
 }
@@ -123,9 +148,18 @@ bool Board::isKingInCheck(bool white) const {
 
 // skipValidation can be set true to avoid infinite recursion with generateMoves
 bool Board::makeMove(const Move& move, bool skipValidation) {
+    if (!moveInBounds(move)) {
+        return false;
+    }
+
     Piece* movingPiece = board[move.fromRow][move.fromCol];
     if (!movingPiece || (!skipValidation && movingPiece->isWhitePiece() != whiteToMove))
         return false;
+
+    Piece* targetPiece = board[move.toRow][move.toCol];
+    if (targetPiece && targetPiece->isWhitePiece() == movingPiece->isWhitePiece()) {
+        return false;
+    }
 
     if (!skipValidation) {
         std::vector<Move> legalMoves = movingPiece->generateMoves(move.fromRow, move.fromCol, *this);
@@ -159,6 +193,7 @@ bool Board::undoMove() {
     if (history.empty()) {
         return false;
     }
+
     // TOOD: Below currently assumes the history is correct. Add guards
     // TODO: Fix move so that we can keep piece history and don't have to re-make captured
 
@@ -169,7 +204,12 @@ bool Board::undoMove() {
 
     const Move& move = prevState.move;
 
-    board[move.fromRow][move.fromCol] = board[move.toRow][move.toCol];
+    Piece* movedPiece = board[move.toRow][move.toCol];
+    if (!movedPiece) {
+        return false;
+    }
+
+    board[move.fromRow][move.fromCol] = movedPiece;
     board[move.fromRow][move.fromCol]->setHasMoved(prevState.hadMoved);
     board[move.toRow][move.toCol] = captured;
 
