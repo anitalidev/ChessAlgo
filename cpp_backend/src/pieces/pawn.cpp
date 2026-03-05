@@ -24,18 +24,20 @@ std::vector<Move> Pawn::generateMoves(int row, int col, const Board& board) cons
         moves.push_back({row, col, oneStep, col});
 
         // Move two squares forward from starting position
-        if (row == startRow && board.getPiece(twoStep, col) == nullptr) {
+        if (row == startRow && twoStep >= 0 && twoStep < 8 && board.getPiece(twoStep, col) == nullptr) {
             moves.push_back({row, col, twoStep, col});
         }
     }
 
-    // Diagonal captures (left and right)
-    for (int dc : {-1, 1}) {
-        int newCol = col + dc;
-        if (newCol >= 0 && newCol < 8) {
-            Piece* target = board.getPiece(oneStep, newCol);
-            if (target != nullptr && target->isWhitePiece() != isWhitePiece()) {
-                moves.push_back({row, col, oneStep, newCol});
+    // Diagonal captures (left and right). If oneStep is off-board, captures are impossible.
+    if (oneStep >= 0 && oneStep < 8) {
+        for (int dc : {-1, 1}) {
+            int newCol = col + dc;
+            if (newCol >= 0 && newCol < 8) {
+                Piece* target = board.getPiece(oneStep, newCol);
+                if (target != nullptr && target->isWhitePiece() != isWhitePiece()) {
+                    moves.push_back({row, col, oneStep, newCol});
+                }
             }
         }
     }
