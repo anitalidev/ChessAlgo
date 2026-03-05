@@ -44,13 +44,12 @@ int main() {
     constexpr int kDepth = 4;
     constexpr int kIterationsPerFen = 50;
 
-    Board board;
-
     int totalCases = 0;
     int validatedCases = 0;
 
     for (const std::string& fen : fens) {
         for (int i = 0; i < kIterationsPerFen; ++i) {
+            Board board;
             board.loadFEN(fen);
             const bool whiteToMove = board.getWhiteToMove();
             const std::vector<Move> legalMoves = MoveGenerator::generateLegalMoves(board, whiteToMove);
