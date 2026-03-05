@@ -1,0 +1,8 @@
+# This is a FEN file representing a chess position. The FEN string is as follows:
+# comments like this line will be safely ignored
+#
+rnbqkbn1/1p1ppppr/p7/2p4p/1P2P1P1/2N2N2/P1PP1P1P/R1BQKB1R b - - 0 1
+# this too
+
+
+
